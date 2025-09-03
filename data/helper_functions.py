@@ -76,7 +76,7 @@ def return_to_rest_position(servo_handler, rest_positions, steps: int = 50, step
 
 def record_movements(recording_id):
     """
-    Records servo movements and video for a specified duration with deterministic sampling.
+    Records servo movements and video, continuing until the user presses Enter to stop.
     Uses existing rest_positions.json if available; otherwise creates it from current positions.
     """
     os.makedirs(cfg.RECORDINGS_FOLDER, exist_ok=True)
@@ -90,9 +90,7 @@ def record_movements(recording_id):
     rest_pos_filepath = os.path.join(cfg.RECORDINGS_FOLDER, cfg.REST_POSITIONS_FILENAME)
 
     SAMPLE_DT = float(cfg.SAMPLING_INTERVAL)
-    DURATION = float(cfg.RECORDING_DURATION)
     VIDEO_FPS = float(cfg.VIDEO_FPS)
-    N_STEPS = int(round(DURATION / SAMPLE_DT))
 
     servo_handler = ServoHandler()
     video_handler = VideoHandler(video_filepath)
@@ -119,41 +117,62 @@ def record_movements(recording_id):
         for servo_id in cfg.SERVO_IDS:
             servo_handler.set_torque(servo_id, False)
 
-        input(f"\nPress Enter to start recording for {DURATION:.1f} seconds...")
-        print("\nRecording started...")
+        input("\nPress Enter to start recording...")
+        print("\nRecording started... Press Enter again to stop.")
+
+        stop_event = threading.Event()
+        def stop_listener():
+            """Waits for user input in a separate thread and sets an event."""
+            input() # This will block until Enter is pressed
+            stop_event.set()
+
+        listener_thread = threading.Thread(target=stop_listener)
+        listener_thread.start()
 
         t0 = time.monotonic()
         movement_data = []
+        k = 0 # Step counter
 
-        for k in range(N_STEPS):
-            target = t0 + k * SAMPLE_DT
-            dt = target - time.monotonic()
-            if dt > 0:
-                time.sleep(dt)
+        while not stop_event.is_set():
+            target_time = t0 + k * SAMPLE_DT
+            sleep_duration = target_time - time.monotonic()
+            if sleep_duration > 0:
+                time.sleep(sleep_duration)
+            
+            # Re-check the flag in case Enter was pressed during sleep
+            if stop_event.is_set():
+                break
 
-            # capture video frame exactly once per sample
-            video_handler.capture_frame()  # one frame per call at VIDEO_FPS
+            # Capture video frame exactly once per sample
+            video_handler.capture_frame()
 
+            # Read current servo positions
             current_positions = [servo_handler.read_position(sid) for sid in cfg.SERVO_IDS]
 
-            # 2. Prepare positions for saving (handle failed reads)
+            # Prepare positions for saving (handle failed reads)
             absolute_positions_to_save = []
             for pos in current_positions:
                 if pos is None or pos == -1:
-                    absolute_positions_to_save.append("")  # Store empty string for missing data
+                    absolute_positions_to_save.append("")
                 else:
                     absolute_positions_to_save.append(pos)
-
+            
+            # Use deterministic timestamp based on sample rate
             t_rec = k * SAMPLE_DT
             movement_data.append([f"{t_rec:.4f}"] + absolute_positions_to_save)
 
-            print(f"Time: {t_rec:5.2f}s | Abs: {absolute_positions_to_save}")
+            print(f"Time: {t_rec:5.2f}s | Abs: {absolute_positions_to_save}", end='\r')
+            
+            k += 1
 
-        # save data 
+        print("\nRecording stopped by user.")
+        listener_thread.join()
+
+        # Save data 
         with open(csv_filepath, 'w', newline='') as file:
             writer = csv.writer(file)
             writer.writerow(["Time"] + [f"Servo_{sid}" for sid in cfg.SERVO_IDS])
-            writer.writerows([row for row in movement_data if row])  # filter out empties
+            writer.writerows([row for row in movement_data if row])
 
         print(f"\nRecording complete. Data saved to '{csv_filepath}'.")
         print(f"Video saved to '{video_filepath}' at ~{VIDEO_FPS} FPS.")
@@ -168,7 +187,6 @@ def record_movements(recording_id):
             servo_handler.set_torque(servo_id, False)
         servo_handler.disconnect()
         video_handler.stop_recording()
-
 
 def sleep_until(t_rec):
     now = time.monotonic()

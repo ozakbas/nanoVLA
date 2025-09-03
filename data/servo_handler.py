@@ -25,12 +25,12 @@ class ServoHandler:
         if self.is_port_open:
             self.portHandler.closePort()
             self.is_port_open = False
-            print("🔌 Servo port closed.")
+            print("Servo port closed.")
 
     def _execute_servo_command(self, servo_id, addr, value, size=1, write=True):
         """Generic function to execute a read or write command."""
         if not self.is_port_open:
-            print("⚠️ Port is not open. Cannot send command.")
+            print("Port is not open. Cannot send command.")
             return (None, None, None) if not write else (None, None)
 
         # Use a variable to store the read value, default to None
@@ -92,12 +92,12 @@ class ServoHandler:
 
     def set_midpoint_as_current_position(self, servo_id):
         """Sets the servo's current position as its new midpoint (zero offset)."""
-        print(f"🛠️  Setting midpoint for Servo {servo_id}...")
+        print(f"Setting midpoint for Servo {servo_id}...")
         self.set_torque(servo_id, False)
         time.sleep(0.1)  # Small delay
         # Command 128 resets the offset to the current position
         if self._execute_servo_command(servo_id, ADDR_MIDPOINT_OFFSET, 128):
-             print(f"✅ Midpoint for Servo {servo_id} has been set to its current position.")
+             print(f"Midpoint for Servo {servo_id} has been set to its current position.")
         self.set_torque(servo_id, True)
 
     @staticmethod
