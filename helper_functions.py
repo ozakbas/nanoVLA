@@ -7,7 +7,7 @@ import cv2
 from servo_handler import ServoHandler
 from video_handler import VideoHandler
 import config as cfg
-
+import threading
 
 def _load_or_create_rest_positions(servo_handler, rest_pos_filepath):
     """

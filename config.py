@@ -15,7 +15,7 @@ ADDR_GOAL_SPEED = 46
 ADDR_MIDPOINT_OFFSET = 20
 
 # -- Recording Settings --
-VIDEO_SPLIT_DURATION = 10 
+VIDEO_SPLIT_DURATION = 5 
 SAMPLING_INTERVAL = 0.05 
 VIDEO_FPS = round(1.0 / SAMPLING_INTERVAL)
 RECORDINGS_FOLDER = "data/recordings" 
@@ -25,13 +25,12 @@ MOVEMENT_FILENAME_TEMPLATE = "{}_{}.csv"
 VIDEO_FILENAME_TEMPLATE = "{}_{}.mp4"
 
 # -- VLM for Automatic Labeling --
-VLM_MODEL = "qwen" # qwen or smolvlm
+VLM_MODEL = "smolvlm" # qwen or smolvlm
 VLM_PROMPT = """Analyze the LEGO building action in the video. Respond with a JSON object containing three keys: 
 1. 'action': A single verb for the action (e.g., 'pick', 'place', 'rotate', 'press').
 2. 'piece_description': A description of the LEGO piece being moved (e.g., 'blue 2x4 brick').
 3. 'destination_description': A description of where the piece is placed (e.g., 'next to the red 2x2 brick').
 """
-
 # -- Video Settings --
 VIDEO_SOURCE = 0  
 VIDEO_FRAME_WIDTH = 640

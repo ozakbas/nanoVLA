@@ -7,7 +7,7 @@ PROJECT_ROOT = os.path.abspath(os.path.join(
 sys.path.append(PROJECT_ROOT)
 
 import config as cfg
-from data.helper_functions import record_movements
+from helper_functions import record_movements
 
 
 if __name__ == "__main__":
