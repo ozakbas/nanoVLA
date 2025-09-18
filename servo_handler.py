@@ -2,7 +2,8 @@ import scservo_sdk as scs
 import time
 from config import (
     SERIAL_PORT, BAUD_RATE, ADDR_TORQUE_ENABLE, ADDR_PRESENT_POSITION, 
-    ADDR_GOAL_POSITION, ADDR_GOAL_ACC, ADDR_GOAL_SPEED, ADDR_MIDPOINT_OFFSET
+    ADDR_GOAL_POSITION, ADDR_GOAL_ACC, ADDR_GOAL_SPEED, ADDR_MIDPOINT_OFFSET,
+    SERVO_MAX
 )
 
 class ServoHandler:
@@ -101,7 +102,7 @@ class ServoHandler:
         self.set_torque(servo_id, True)
 
     @staticmethod
-    def circular_diff(current, base, max_val=4096):
+    def circular_diff(current, base, max_val=SERVO_MAX):
         """Calculates the shortest difference in a circular space (e.g., servo positions)."""
         diff = current - base
         if diff > max_val / 2:

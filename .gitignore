@@ -13,6 +13,7 @@ splitted_recordings
 *.csv
 *.mp4
 *.pt
+*.pth
 
 # OS metadata
 .DS_Store
